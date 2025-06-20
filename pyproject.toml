@@ -1,0 +1,14 @@
+[project]
+name = "gemeni-langchain"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.13",
+    "langchain-google-genai>=2.1.5",
+    "pillow>=11.2.1",
+    "pydantic>=2.11.7",
+    "python-dotenv>=1.1.0",
+    "unicorn>=2.1.3",
+]
