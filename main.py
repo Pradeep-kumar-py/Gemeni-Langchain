@@ -1,60 +1,56 @@
-import os
-from dotenv import load_dotenv # type: ignore
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List
+import uvicorn  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware
+from utils.types import ImageData
+from controller.imageProcess import (
+    process_image,
+)
+
+
+from dotenv import load_dotenv  # type: ignore
+
 load_dotenv()
 
-# from IPython.display import Image, display
-from PIL import Image
-import io
-import base64
-from langchain_core.messages import AIMessage
-from langchain_core.messages import BaseMessage  # Add this import
-from langchain_google_genai import ChatGoogleGenerativeAI
 
-llm = ChatGoogleGenerativeAI(model="models/gemini-2.0-flash-preview-image-generation")
+app = FastAPI()
 
-message = {
-    "role": "user",
-    "content": "Generate a photorealistic image of a cuddly cat wearing a hat.",
-}
+origins = [
+    "http://localhost:3000",  # Your Next.js frontend
+    # Add production URL here if needed later
+]
 
-
-response = llm.invoke(
-    [message],
-    generation_config=dict(response_modalities=["TEXT", "IMAGE"]),
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allows requests from these origins
+    allow_credentials=True,  # Allows cookies, sessions, etc.
+    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers (Authorization, Content-Type, etc.)
 )
 
-next_message = {
-    "role": "user",
-    "content": "Can you take the same image and make the cat black?",
-}
-
-response = llm.invoke(
-    [message, response, next_message],
-    generation_config=dict(response_modalities=["TEXT", "IMAGE"]),
-)
-
-def _get_image_base64(response:BaseMessage) -> None:
-    image_block = next(
-        block
-        for block in response.content
-            if isinstance(block, dict) and block.get("image_url")
-    )
-    return image_block["image_url"].get("url").split(",")[-1]
+# image_url = "https://www.bing.com/ck/a?!&&p=9b83700abb1a32ae9d81deaa8cde9ce233a7e449530d1d3cfc178f466849516dJmltdHM9MTc1MDM3NzYwMA&ptn=3&ver=2&hsh=4&fclid=3d3b609a-f775-604c-23ca-7425f60a61a1&u=a1L2ltYWdlcy9zZWFyY2g_cT1zb3BoaWUlMjB3b3JsZCUyMGJvb2slMjBpbWFnZSZGT1JNPUlRRlJCQSZpZD1EREFFNjg4Qzc2MjgyNDI1QTUxNTg4MzhFQkQ2OEQ1MTJGMkNERkEz&ntb=1"
 
 
-image_base64 = _get_image_base64(response)
-image_bytes = base64.b64decode(image_base64) # type: ignore
-image = Image.open(io.BytesIO(image_bytes))
-image.show()  # Display the image using the default image viewer
+@app.post("/process-image")
+async def process_image_endpoint(image: ImageData):
+    image_url = image.image_url
+    summary = process_image(image_url)
+
+    return JSONResponse(content={"summary": summary})
 
 
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the Image Processing API"}
 
 
+def main():
+    print("Hello from testing-with-uv-python!")
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
 
 
-
-
-
-
-
-
+if __name__ == "__main__":
+    main()
+    print("Image processed successfully.")
