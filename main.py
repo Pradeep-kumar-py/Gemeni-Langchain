@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List
 import uvicorn  # type: ignore
@@ -22,6 +23,7 @@ load_dotenv()
 
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # origins = [
 #     "http://localhost:3000",  # Your Next.js frontend

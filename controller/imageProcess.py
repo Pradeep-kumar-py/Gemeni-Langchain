@@ -62,38 +62,37 @@ def process_image(image_url, title):
 
 
 
+
 def audio_summary(summary):
-    print("Summary to be converted:", summary)
-
-    def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
-        with wave.open(filename, "wb") as wf:
-            wf.setnchannels(channels)
-            wf.setsampwidth(sample_width)
-            wf.setframerate(rate)
-            wf.writeframes(pcm)
-
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-tts",
-        contents=f"Read this cheerfully: {summary}",
-        config=types.GenerateContentConfig(
-            response_modalities=["AUDIO"],
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name='Kore',
-                    )
-                )
-            )
-        )
-    )
-
+    # ...existing code...
     data = response.candidates[0].content.parts[0].inline_data.data  # type: ignore
 
-    file_name = 'summary_output.wav'
-    wave_file(file_name, data)
-    print(f"Audio saved as {file_name}")
+    # Ensure static directory exists
+    os.makedirs("static", exist_ok=True)
+    file_name = f"static/summary_{uuid.uuid4()}.mp3"
+
+    # Use the TextToSpeechClient to generate the final MP3
+    client = texttospeech.TextToSpeechClient()
+    input_text = texttospeech.SynthesisInput(text=summary)
+
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US", name="en-US-Wavenet-D"
+    )
+
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=input_text, voice=voice, audio_config=audio_config
+    )
+
+    with open(file_name, "wb") as out:
+        out.write(response.audio_content)
+        
+    print(f'Audio content written to "{file_name}"')
+    
+    return file_name
 
     print("Summary to be converted:", summary)
 
