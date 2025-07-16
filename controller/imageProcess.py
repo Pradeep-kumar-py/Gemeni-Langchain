@@ -12,7 +12,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv  
 load_dotenv()
 
-from google.cloud import texttospeech
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
@@ -63,57 +62,3 @@ def process_image(image_url, title):
 
 
 
-def audio_summary(summary):
-    # ...existing code...
-    data = response.candidates[0].content.parts[0].inline_data.data  # type: ignore
-
-    # Ensure static directory exists
-    os.makedirs("static", exist_ok=True)
-    file_name = f"static/summary_{uuid.uuid4()}.mp3"
-
-    # Use the TextToSpeechClient to generate the final MP3
-    client = texttospeech.TextToSpeechClient()
-    input_text = texttospeech.SynthesisInput(text=summary)
-
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", name="en-US-Wavenet-D"
-    )
-
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
-    )
-
-    response = client.synthesize_speech(
-        input=input_text, voice=voice, audio_config=audio_config
-    )
-
-    with open(file_name, "wb") as out:
-        out.write(response.audio_content)
-        
-    print(f'Audio content written to "{file_name}"')
-    
-    return file_name
-
-    print("Summary to be converted:", summary)
-
-    client = texttospeech.TextToSpeechClient()
-    input_text = texttospeech.SynthesisInput(text="hii i am pradeep kumar")
-
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", name="en-US-Wavenet-D"
-    )
-
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
-    )
-
-    response = client.synthesize_speech(
-        input=input_text, voice=voice, audio_config=audio_config
-    )
-
-    with open("output.mp3", "wb") as out:
-        out.write(response.audio_content)
-        
-    print('Audio content written to "output.mp3"')
-    
-    return "output.mp3"

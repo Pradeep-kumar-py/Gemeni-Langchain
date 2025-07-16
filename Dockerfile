@@ -10,16 +10,15 @@ RUN pip install uv
 # Copy dependency definitions
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
-# This layer is cached and only runs again if dependency files change
-RUN uv pip install --system .
+# Install dependencies using uv sync
+RUN uv sync --frozen --no-dev
 
 # Copy the rest of the project files
 COPY . .
+COPY .env .env
 
 # Expose the port FastAPI will run on
-EXPOSE 8000
+EXPOSE 80
 
 # Run the FastAPI server
-# Corrected "app.main:app" to "main:app"
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

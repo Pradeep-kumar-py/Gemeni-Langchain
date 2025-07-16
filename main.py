@@ -8,17 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from utils.types import (ImageData, AudioData, VideoData, AudioSummary)
 from controller.imageProcess import (
     process_image,
-    audio_summary
 )
-from controller.audioProcess import (
-    download_audio_as_m4a,
-    audio_transcription,
-    get_youtube_transcript
-)
+from utils.ytVideoid import extract_video_id
+from controller.ytTranscript import get_youtube_transcript
 
 
 from dotenv import load_dotenv  # type: ignore
-
 load_dotenv()
 
 
@@ -45,10 +40,16 @@ app.add_middleware(
 
 @app.post("/transcribe-youtube")
 async def transcribe_youtube(video: VideoData):
-    video_id = video.video_id
-    if not video_id:
-        return JSONResponse(status_code=400, content={"error": "Video ID cannot be empty"})
+    video_url = video.video_id  # Assuming this might now contain a full URL
+    if not video_url:
+        return JSONResponse(status_code=400, content={"error": "Video URL cannot be empty"})
     try:
+        # Extract video ID from URL if it's a full URL
+        if "youtube.com" in video_url or "youtu.be" in video_url:
+            video_id = extract_video_id(video_url)
+        else:
+            video_id = video_url  # Assume it's already a video ID
+            
         transcript = await get_youtube_transcript(video_id) # type: ignore
         return JSONResponse(content={"transcript": transcript})
     except Exception as e:
@@ -67,11 +68,7 @@ async def process_image_endpoint(image: ImageData):
     return JSONResponse(content={"summary": summary})
 
 
-@app.post("/audio_summary")
-async def audio_summary_endpoint(data: AudioSummary):
-    summary = data.summary    
-    audio_summary(summary)
-    return {"audio_url": f"/static/"}
+
 
 
 
